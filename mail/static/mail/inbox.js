@@ -59,6 +59,37 @@ function load_mailbox(mailbox) {
         console.log(emails);
         document.querySelector('#emails-view').innerHTML += `<div id="email-list"></div>`
         for (var i = 0; i < emails.length; i++) {
+          if (emails[i].read == false) {
+            document.querySelector('#email-list').innerHTML += `<div id="single-email" style="background-color: white; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
+              <a href="" id=${emails[i].id}>
+                <span>${emails[i].subject}</span>
+                <span>${emails[i].sender}</span>
+                <span>${emails[i].timestamp}</span>  458
+              </a>
+            </div>`
+          }
+          else {
+            document.querySelector('#email-list').innerHTML += `<div id="single-email" style="background-color: grey; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
+              <a href="" id=${emails[i].id}>
+                <span>${emails[i].subject}</span>
+                <span>${emails[i].sender}</span>
+                <span>${emails[i].timestamp}</span>
+              </a>
+            </div>`
+          }
+        }
+        
+    });
+  }
+  
+  else if (mailbox == 'sent') {
+    fetch('/emails/sent')
+    .then(response => response.json())
+    .then(emails => {
+        // Print emails
+        console.log(emails);
+        document.querySelector('#emails-view').innerHTML += `<div id="email-list"></div>`
+        for (var i = 0; i < emails.length; i++) {
           
           document.querySelector('#email-list').innerHTML += `<div id="single-email">
           <span>${emails[i].subject}</span>

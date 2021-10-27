@@ -1,3 +1,7 @@
 textarea {
     min-height: 400px;
 }
+
+#single-email {
+	border: 5px solid red;
+}
