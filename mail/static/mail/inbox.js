@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
   document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
   document.querySelector('#compose').addEventListener('click', compose_email);
+  document.querySelector('#send-email').addEventListener('click', () => send_email());
 
   // By default, load the inbox
   load_mailbox('inbox');
@@ -20,6 +21,23 @@ function compose_email() {
   document.querySelector('#compose-recipients').value = '';
   document.querySelector('#compose-subject').value = '';
   document.querySelector('#compose-body').value = '';
+}
+
+function send_email() {
+  fetch('/emails', {
+    method: 'POST',
+    body: JSON.stringify({
+        recipients: document.getElementById("compose-recipients").value,
+        subject: document.getElementById("compose-subject").value,
+        body: document.getElementById("compose-body").value
+    })
+  })
+  .then(response => response.json())
+  .then(result => {
+      // Print result
+      console.log(result);
+  });
+  load_mailbox('sent');
 }
 
 function load_mailbox(mailbox) {
@@ -48,11 +66,7 @@ function load_mailbox(mailbox) {
           <span>${emails[i].timestamp}</span>
           </div>`
         }
-                
-
         
-        
-        // ... do something else with emails ...
     });
   }
 }
