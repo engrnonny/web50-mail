@@ -85,13 +85,14 @@ function load_mailbox(mailbox) {
         document.querySelector('#emails-view').innerHTML += `<div id="email-list"></div>`
         for (var i = 0; i < emails.length; i++) {
           if (emails[i].read == false) {
-            document.querySelector('#email-list').innerHTML += `<div id="single-email" style="background-color: white; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
-              <a href="" id=${emails[i].id}>
-                <span>${emails[i].subject}</span>
-                <span>${emails[i].sender}</span>
-                <span>${emails[i].timestamp}</span>  458
-              </a>
-            </div>`
+            const email_div = `<div id="single-email" style="background-color: white; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
+            <a href="" id=${emails[i].id} value=${emails[i].id} onclick="view_email(${emails[i].id}); return false;">
+              <span>${emails[i].subject}</span>
+              <span>${emails[i].sender}</span>
+              <span>${emails[i].timestamp}</span>
+            </a>
+          </div>`
+          document.querySelector('#email-list').innerHTML += email_div
           }
           else {
             document.querySelector('#email-list').innerHTML += `<div id="single-email" style="background-color: grey; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
@@ -117,12 +118,24 @@ function load_mailbox(mailbox) {
         for (var i = 0; i < emails.length; i++) {
           
           document.querySelector('#email-list').innerHTML += `<div id="single-email">
-          <span>${emails[i].subject}</span>
-          <span>${emails[i].sender}</span>
-          <span>${emails[i].timestamp}</span>
+            <span>${emails[i].subject}</span>
+            <span>${emails[i].sender}</span>
+            <span>${emails[i].timestamp}</span>
           </div>`
         }
         
     });
   }
+}
+
+function view_email(email_id) {
+  fetch(`/emails/${email_id}`)
+  .then(response => response.json())
+  .then(email => {
+      // Print email
+      console.log(email);
+
+      // ... do something else with email ...
+      
+  });
 }
