@@ -16,6 +16,7 @@ function compose_email() {
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#view-email').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
   document.querySelectorAll("button").forEach(button => button.classList.remove("selected"));
   document.querySelector(`#compose`).classList.add("selected");
@@ -68,6 +69,7 @@ function load_mailbox(mailbox) {
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#view-email').style.display = 'none';
   document.querySelectorAll("button").forEach(button => button.classList.remove("selected"));
   document.querySelector(`#${mailbox}`).classList.add("selected");
 
@@ -95,8 +97,8 @@ function load_mailbox(mailbox) {
           document.querySelector('#email-list').innerHTML += email_div
           }
           else {
-            document.querySelector('#email-list').innerHTML += `<div id="single-email" style="background-color: grey; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
-              <a href="" id=${emails[i].id}>
+            document.querySelector('#email-list').innerHTML += `<div id="single-email" style="background-color: lightgrey; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
+            <a href="" id=${emails[i].id} value=${emails[i].id} onclick="view_email(${emails[i].id}); return false;">
                 <span>${emails[i].subject}</span>
                 <span>${emails[i].sender}</span>
                 <span>${emails[i].timestamp}</span>
@@ -129,13 +131,32 @@ function load_mailbox(mailbox) {
 }
 
 function view_email(email_id) {
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#view-email').style.display = 'block';
+
+  // Show the Email subject as heading
+
   fetch(`/emails/${email_id}`)
   .then(response => response.json())
   .then(email => {
       // Print email
       console.log(email);
-
-      // ... do something else with email ...
-      
+      const view_email = document.querySelector('#view-email');
+      view_email.innerHTML += `<h3>${email.subject}</h3><span>${email.timestamp}</span>`
+      view_email.innerHTML += '<br>'
+      view_email.innerHTML += `<div><button>Archive</button></div>`
+      view_email.innerHTML += '<hr>'
+      view_email.innerHTML += `<div>From: ${email.sender}</div>`
+      view_email.innerHTML += `<div>To: ${email.recipients}</div>`
+      view_email.innerHTML += '<br>'
+      view_email.innerHTML += `<div>Message:</div><div>${email.body}</div>`
   });
+
+  fetch(`/emails/${email_id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+        read: true
+    })
+  })
 }
