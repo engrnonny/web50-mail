@@ -12,14 +12,37 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
+// Archive an email.
+function archive_email(email_id) {
+
+  fetch(`/emails/${email_id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      archived: true
+    })
+  })
+  load_mailbox('inbox');
+}
+
+// Unarchive an email.
+function unarchive_email(email_id) {
+
+  fetch(`/emails/${email_id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      archived: false
+    })
+  })
+  load_mailbox('inbox');
+}
+
+
 function compose_email() {
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#view-email').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
-  document.querySelectorAll("button").forEach(button => button.classList.remove("selected"));
-  document.querySelector(`#compose`).classList.add("selected");
 
   // Clear out composition fields
   document.querySelector('#compose-recipients').value = '';
@@ -27,11 +50,119 @@ function compose_email() {
   document.querySelector('#compose-body').value = '';
 }
 
+
+function load_mailbox(mailbox) {
+  
+  // Show the mailbox and hide other views
+  document.querySelector('#emails-view').style.display = 'block';
+  document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#view-email').style.display = 'none';
+
+  // Show the mailbox name
+  document.querySelector('#emails-view').innerHTML = `<h3 id="mailbox-name">${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+
+  // Load mails of mailbox if "inbox" is clicked.
+
+  if (mailbox == 'inbox') {
+    fetch('/emails/inbox')
+    .then(response => response.json())
+    .then(emails => {
+        document.querySelector('#emails-view').innerHTML += `<div id="email-list"></div>`
+        for (var i = 0; i < emails.length; i++) {
+          if (emails[i].read == false) {
+            const email_div = `<div id="single-email" style="background-color: white; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
+            <a href="" id=${emails[i].id} value=${emails[i].id} onclick="view_email(${emails[i].id}, 1); return false;">
+              <span>${emails[i].subject}</span>
+              <span>${emails[i].sender}</span>
+              <span>${emails[i].timestamp}</span>
+            </a>
+          </div>`
+          document.querySelector('#email-list').innerHTML += email_div
+          }
+          else {
+            document.querySelector('#email-list').innerHTML += `<div id="single-email" style="background-color: lightgrey; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
+            <a href="" id=${emails[i].id} value=${emails[i].id} onclick="view_email(${emails[i].id}, 1); return false;">
+                <span>${emails[i].subject}</span>
+                <span>${emails[i].sender}</span>
+                <span>${emails[i].timestamp}</span>
+              </a>
+            </div>`
+          }
+        }
+        
+    });
+  }
+  
+  else if (mailbox == 'sent') {
+    fetch('/emails/sent')
+    .then(response => response.json())
+    .then(emails => {
+        document.querySelector('#emails-view').innerHTML += `<div id="email-list"></div>`
+        for (var i = 0; i < emails.length; i++) {
+          
+          document.querySelector('#email-list').innerHTML += `<div id="single-email" style="background-color: lightgrey; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
+            <a href="" id=${emails[i].id} value=${emails[i].id} onclick="view_email(${emails[i].id}, 2); return false;">
+              <span>${emails[i].subject}</span>
+              <span>${emails[i].sender}</span>
+              <span>${emails[i].timestamp}</span>
+            </a>
+          </div>`
+        }
+        
+    });
+  }
+
+  else if (mailbox == 'archive') {
+    fetch('/emails/archive')
+    .then(response => response.json())
+    .then(emails => {
+        document.querySelector('#emails-view').innerHTML += `<div id="email-list"></div>`
+        for (var i = 0; i < emails.length; i++) {
+          
+          document.querySelector('#email-list').innerHTML += `<div id="single-email" style="background-color: lightgrey; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
+            <a href="" id=${emails[i].id} value=${emails[i].id} onclick="view_email(${emails[i].id}, 3); return false;">
+              <span>${emails[i].subject}</span>
+              <span>${emails[i].sender}</span>
+              <span>${emails[i].timestamp}</span>
+            </a>
+          </div>`
+        }
+        
+    });
+  }
+}
+
+
+function reply_email(email_id) {
+
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#view-email').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'block';
+
+
+  fetch(`/emails/${email_id}`)
+  .then(response => response.json())
+  .then(email => {
+    document.querySelector('#compose-recipients').value = email.sender;
+    var str = email.subject;
+    var strFirstThree = str.substring(0,3);
+    if (strFirstThree == "Re:") {
+      document.querySelector('#compose-subject').value = email.subject;
+    }
+    else {
+      document.querySelector('#compose-subject').value = `Re: ${email.subject}`;
+    }
+    
+    document.querySelector('#compose-body').value = `On ${email.timestamp} ${email.sender} wrote: \n${email.body}`;
+  });
+}
+  
+
+
 function send_email() {
   const recipients = document.querySelector('#compose-recipients').value;
   const subject = document.querySelector('#compose-subject').value;
   const body = document.querySelector('#compose-body').value;
-  console.log(recipients);
   fetch('/emails', {
     method: 'POST',
     body: JSON.stringify({
@@ -64,93 +195,33 @@ function send_email() {
   return false;
 }
 
-function load_mailbox(mailbox) {
-  
-  // Show the mailbox and hide other views
-  document.querySelector('#emails-view').style.display = 'block';
-  document.querySelector('#compose-view').style.display = 'none';
-  document.querySelector('#view-email').style.display = 'none';
-  document.querySelectorAll("button").forEach(button => button.classList.remove("selected"));
-  document.querySelector(`#${mailbox}`).classList.add("selected");
 
-  // Show the mailbox name
-  document.querySelector('#emails-view').innerHTML = `<h3 id="mailbox-name">${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
-
-  // Load mails of mailbox if "inbox" is clicked.
-
-  if (mailbox == 'inbox') {
-    fetch('/emails/inbox')
-    .then(response => response.json())
-    .then(emails => {
-        // Print emails
-        console.log(emails);
-        document.querySelector('#emails-view').innerHTML += `<div id="email-list"></div>`
-        for (var i = 0; i < emails.length; i++) {
-          if (emails[i].read == false) {
-            const email_div = `<div id="single-email" style="background-color: white; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
-            <a href="" id=${emails[i].id} value=${emails[i].id} onclick="view_email(${emails[i].id}); return false;">
-              <span>${emails[i].subject}</span>
-              <span>${emails[i].sender}</span>
-              <span>${emails[i].timestamp}</span>
-            </a>
-          </div>`
-          document.querySelector('#email-list').innerHTML += email_div
-          }
-          else {
-            document.querySelector('#email-list').innerHTML += `<div id="single-email" style="background-color: lightgrey; border: 2px solid black; margin: 2rem; padding: 0.5rem; height: 4rem;">
-            <a href="" id=${emails[i].id} value=${emails[i].id} onclick="view_email(${emails[i].id}); return false;">
-                <span>${emails[i].subject}</span>
-                <span>${emails[i].sender}</span>
-                <span>${emails[i].timestamp}</span>
-              </a>
-            </div>`
-          }
-        }
-        
-    });
-  }
-  
-  else if (mailbox == 'sent') {
-    fetch('/emails/sent')
-    .then(response => response.json())
-    .then(emails => {
-        // Print emails
-        console.log(emails);
-        document.querySelector('#emails-view').innerHTML += `<div id="email-list"></div>`
-        for (var i = 0; i < emails.length; i++) {
-          
-          document.querySelector('#email-list').innerHTML += `<div id="single-email">
-            <span>${emails[i].subject}</span>
-            <span>${emails[i].sender}</span>
-            <span>${emails[i].timestamp}</span>
-          </div>`
-        }
-        
-    });
-  }
-}
-
-function view_email(email_id) {
+function view_email(email_id, mailbox) {
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'none';
   document.querySelector('#view-email').style.display = 'block';
-
-  // Show the Email subject as heading
+  document.querySelector('#view-email').innerHTML = "";
 
   fetch(`/emails/${email_id}`)
   .then(response => response.json())
   .then(email => {
-      // Print email
-      console.log(email);
-      const view_email = document.querySelector('#view-email');
-      view_email.innerHTML += `<h3>${email.subject}</h3><span>${email.timestamp}</span>`
-      view_email.innerHTML += '<br>'
-      view_email.innerHTML += `<div><button>Archive</button></div>`
-      view_email.innerHTML += '<hr>'
-      view_email.innerHTML += `<div>From: ${email.sender}</div>`
-      view_email.innerHTML += `<div>To: ${email.recipients}</div>`
-      view_email.innerHTML += '<br>'
-      view_email.innerHTML += `<div>Message:</div><div>${email.body}</div>`
+    const view_email = document.querySelector('#view-email');
+    view_email.innerHTML += `<h3>${email.subject}</h3><span>${email.timestamp}</span>`
+    view_email.innerHTML += '<br>'
+    if (mailbox == 1) {
+      view_email.innerHTML += `<div><button onclick="archive_email(${email.id}); return false;" class="btn btn-primary">Archive</button></div>`
+    } 
+    else if (mailbox == 3) {
+      view_email.innerHTML += `<div><button onclick="unarchive_email(${email.id}); return false;" class="btn btn-primary">Unarchive</button></div>`
+    }      
+    view_email.innerHTML += '<hr>'
+    view_email.innerHTML += `<div>From: ${email.sender}</div>`
+    view_email.innerHTML += `<div>To: ${email.recipients}</div>`
+    view_email.innerHTML += '<br>'
+    view_email.innerHTML += `<div>Message:</div><div class="form-control">${email.body}</div><br>`
+    if (mailbox == 1) {
+      view_email.innerHTML += `<div><button onclick="reply_email(${email.id}); return false;" class="btn btn-primary">Reply</button></div>`
+    } 
   });
 
   fetch(`/emails/${email_id}`, {
